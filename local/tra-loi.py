@@ -30,7 +30,8 @@ def goi_worker(duong, body=None):
     key = doc(os.path.join(GOC, ".secret.admin")).strip()
     url = f"{WORKER}{duong}{'&' if '?' in duong else '?'}key={key}"
     req = urllib.request.Request(url, data=json.dumps(body).encode() if body else None,
-                                 headers={"content-type": "application/json"}, method="POST" if body else "GET")
+                                 headers={"content-type": "application/json", "user-agent": "bot-tiem-nao/1.0"},  # Cloudflare chặn User-Agent mặc định của Python (lỗi 1010)
+                                 method="POST" if body else "GET")
     try:
         with urllib.request.urlopen(req, timeout=60) as r: return json.load(r)
     except urllib.error.HTTPError as e:
@@ -89,6 +90,8 @@ def main():
     except BlockingIOError: log("lần trước chưa xong, bỏ qua"); return
 
     d = goi_worker("/admin/cho-xu-ly")
+    if "khach" not in d:
+        log("LỖI gọi worker /admin/cho-xu-ly:", d.get("loi", d)); return
     khach = d.get("khach", [])
     if not khach: return  # yên lặng khi không có việc
     log(f"có {len(khach)} khách chờ")
