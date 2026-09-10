@@ -194,7 +194,8 @@ async function admin(request, url, env) {
     const ds = await kho.danhSachCho(env);
     const ra = [];
     for (const c of ds) {
-      if (await kho.nguoiDangTruc(env, c.psid)) continue;
+      const dau = await env.KHO.get(`nguoi:${c.psid}`);
+      if (dau && dau !== "cho-nguoi") continue; // chỉ người thật mới chặn; "cho-nguoi" (im ngắn) hết hạn thì KV tự xoá
       ra.push({ ...c, ten: await kho.layTen(env, c.psid), lichSu: await kho.layLichSu(env, c.psid) });
     }
     return json({ soKhach: ra.length, khach: ra });
