@@ -83,3 +83,6 @@ export async function danhSachCho(env) {
   }
   return ra;
 }
+
+export async function layTen(env, psid) { return (await env.KHO.get(`ten:${psid}`)) || ""; }
+export async function luuTen(env, psid, ten) { if (ten) await env.KHO.put(`ten:${psid}`, ten, { expirationTtl: 60 * 60 * 24 * 90 }); }

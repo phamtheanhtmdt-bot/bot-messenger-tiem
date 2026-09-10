@@ -9,7 +9,7 @@
 //
 // Bot im khi: bot bị tắt, hoặc người thật (chủ tiệm) vừa trả lời khách đó trong GIO_NGUOI_TRUC giờ.
 
-import { kiemTraChuKy, guiTin, guiTinBot, baoDangGo, nhuongQuyen } from "./facebook.js";
+import { kiemTraChuKy, guiTin, guiTinBot, baoDangGo, nhuongQuyen, layTenKhach } from "./facebook.js";
 import { hoiAI } from "./ai.js";
 import * as kho from "./kho.js";
 
@@ -107,6 +107,7 @@ async function xuLySuKien(env, su) {
   if (!noiDung) return;
 
   const ls = await kho.layLichSu(env, psid);
+  if (!(await kho.layTen(env, psid))) await kho.luuTen(env, psid, await layTenKhach(env, psid));
 
   // Người thật đang trực → chỉ ghi lịch sử, không xếp hàng, không trả lời.
   if (await kho.nguoiDangTruc(env, psid)) {
@@ -140,7 +141,8 @@ async function xuLySuKien(env, su) {
 
 // Hỏi AI, cập nhật lịch sử, ghi sổ nếu cần người. Dùng chung cho webhook và /admin/thu.
 async function traLoi(env, psid, ls, noiDung) {
-  const kq = await hoiAI(env, ls, noiDung);
+  const ten = await kho.layTen(env, psid);
+  const kq = await hoiAI(env, ls, ten ? `[Tên Facebook của khách: ${ten}]\n${noiDung}` : noiDung);
   let traLoi = kq.traLoi;
   if (kq.chuyenNguoi) {
     if (!traLoi) traLoi = "Dạ em ghi nhận rồi ạ, chủ tiệm sẽ vào trả lời anh/chị sớm nhất nhé.";
@@ -191,7 +193,7 @@ async function admin(request, url, env) {
     const ra = [];
     for (const c of ds) {
       if (await kho.nguoiDangTruc(env, c.psid)) continue;
-      ra.push({ ...c, lichSu: await kho.layLichSu(env, c.psid) });
+      ra.push({ ...c, ten: await kho.layTen(env, c.psid), lichSu: await kho.layLichSu(env, c.psid) });
     }
     return json({ soKhach: ra.length, khach: ra });
   }
@@ -218,7 +220,7 @@ async function admin(request, url, env) {
   }
   if (p === "/admin/khach" && request.method === "GET") {
     const psid = url.searchParams.get("psid");
-    return json({ psid, lichSu: await kho.layLichSu(env, psid), nguoiTruc: await kho.nguoiDangTruc(env, psid) });
+    return json({ psid, ten: await kho.layTen(env, psid), lichSu: await kho.layLichSu(env, psid), nguoiTruc: await kho.nguoiDangTruc(env, psid) });
   }
   return json({ loi: "không có đường này" }, 404);
 }

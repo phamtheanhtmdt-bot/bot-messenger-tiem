@@ -95,3 +95,13 @@ export async function guiTinBot(env, psid, text) {
     return await guiTin(env, psid, text);
   }
 }
+
+// Tên Facebook của khách (chỉ lấy được với người đã nhắn Page). Trả "" nếu không lấy được.
+export async function layTenKhach(env, psid) {
+  try {
+    const r = await fetch(`${GRAPH}/${psid}?fields=first_name,last_name,name&access_token=${env.FB_PAGE_TOKEN}`);
+    const d = await r.json();
+    if (d.error) return "";
+    return d.name || [d.first_name, d.last_name].filter(Boolean).join(" ");
+  } catch { return ""; }
+}

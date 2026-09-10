@@ -67,11 +67,13 @@ def ghep_prompt(lich_su, tin_moi):
 Soạn tin trả lời tiếp theo. Trả về ĐÚNG một khối JSON, không chữ nào khác:
 {{"tra_loi": "...", "chuyen_nguoi": true|false, "ly_do": "..."}}"""
 
-def hoi_claude(prompt):
+def hoi_claude(prompt, thu_lai=1):
     cmd = ["claude", "-p", "--model", MODEL, "--output-format", "json", "--max-turns", "1"]
     r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=180)
     if r.returncode != 0:
-        raise RuntimeError(f"claude rc={r.returncode}: {r.stderr[:300]}")
+        if thu_lai > 0:  # Claude Code thỉnh thoảng thoát mã 1 không lý do, thử lại một lần
+            return hoi_claude(prompt, thu_lai - 1)
+        raise RuntimeError(f"claude rc={r.returncode}: {(r.stderr or r.stdout)[:400]}")
     d = json.loads(r.stdout)
     if d.get("is_error"): raise RuntimeError(f"claude is_error: {d.get('result')}")
     text = d.get("result", "")
