@@ -1,0 +1,6 @@
+# Chép thành .dev.vars khi chạy thử ở máy (npx wrangler dev). KHÔNG commit file .dev.vars.
+FB_PAGE_TOKEN=
+FB_APP_SECRET=
+FB_VERIFY_TOKEN=
+OPENAI_API_KEY=
+ADMIN_KEY=

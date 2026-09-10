@@ -1,0 +1,9 @@
+.dev.vars
+.secret.tmp
+node_modules/
+.wrangler/
+*.log
+.secret.*
+fb-page-token.txt
+local/tra-loi.log
+local/.lock
