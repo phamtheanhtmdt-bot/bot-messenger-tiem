@@ -13,6 +13,7 @@ FB_APP_ID = "<id-app-developers>"        # developers.facebook.com → app → A
 AI_BASE_URL = "https://api.openai.com/v1"    # chỉ dùng khi CHE_DO=worker; dịch vụ tương thích OpenAI
 MODEL = "gpt-4.1"                        # một hoặc nhiều tên cách nhau dấu phẩy, con đầu lỗi thử con sau
 GIO_NGUOI_TRUC = "6"              # người thật trả lời xong, bot im bấy nhiêu giờ với khách đó
+PHUT_CHO_NGUOI = "10"             # bot tự "chuyển người" thì im bấy nhiêu phút; không ai vào thì bot nói tiếp
 
 [[kv_namespaces]]
 binding = "KHO"

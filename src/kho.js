@@ -86,3 +86,9 @@ export async function danhSachCho(env) {
 
 export async function layTen(env, psid) { return (await env.KHO.get(`ten:${psid}`)) || ""; }
 export async function luuTen(env, psid, ten) { if (ten) await env.KHO.put(`ten:${psid}`, ten, { expirationTtl: 60 * 60 * 24 * 90 }); }
+
+// Bot tự "chuyển người": im NGẮN (mặc định 10 phút) để chủ tiệm kịp vào; không ai vào thì bot lại trả lời.
+export async function danhDauChoNguoi(env, psid) {
+  const phut = Number(env.PHUT_CHO_NGUOI || 10);
+  await env.KHO.put(`nguoi:${psid}`, "cho-nguoi", { expirationTtl: Math.max(60, phut * 60) });
+}

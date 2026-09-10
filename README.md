@@ -9,7 +9,7 @@ trong sách, bot nhường người thật và im 6 giờ với khách đó.
 ```
 Khách nhắn Fanpage → Facebook webhook → Worker (Cloudflare) ghi lịch sử, xếp hàng chờ
                                               ↓
-              Bộ não soạn trả lời: 5A Claude Code trên máy bạn (local/tra-loi.py, liên tục (5 giây ngó hàng chờ một lần))
+              Bộ não soạn trả lời: 5A Claude Code trên máy bạn (local/tra-loi.py, liên tục (2 giây ngó hàng chờ một lần))
                                    hoặc 5B Worker tự gọi AI (OpenAI hoặc dịch vụ tương thích)
                                               ↓
                               Worker gửi tin cho khách bằng Messenger Send API

@@ -95,14 +95,14 @@ def main():
     try: fcntl.flock(khoa, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError: return  # đã có một bản đang chạy vòng lặp
 
-    # --vong-lap: chạy liên tục, 5 giây ngó hàng chờ một lần, tự thoát sau 50 phút để task Windows khởi động lại bản mới.
+    # --vong-lap: chạy liên tục, 2 giây ngó hàng chờ một lần, tự thoát sau 50 phút để task Windows khởi động lại bản mới.
     if len(sys.argv) >= 2 and sys.argv[1] == "--vong-lap":
         log("bắt đầu vòng lặp")
         het = time.time() + 50 * 60
         while time.time() < het:
             try: mot_vong()
             except Exception as e: log("LỖI vòng lặp:", e)
-            time.sleep(5)
+            time.sleep(2)
         log("hết 50 phút, thoát để khởi động lại"); return
 
     mot_vong()

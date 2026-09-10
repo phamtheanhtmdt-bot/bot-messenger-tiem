@@ -99,7 +99,7 @@ async function guiNhieuTin(env, psid, text) {
   for (let i = 0; i < ds.length; i++) {
     if (i > 0) {
       await baoDangGo(env, psid);
-      await cho(Math.min(3000, 900 + ds[i].length * 25));
+      await cho(Math.min(1800, 500 + ds[i].length * 15));
     }
     ra.push(await guiTin(env, psid, ds[i]));
   }

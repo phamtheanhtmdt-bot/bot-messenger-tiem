@@ -109,8 +109,10 @@ async function xuLySuKien(env, su) {
   const ls = await kho.layLichSu(env, psid);
   if (!(await kho.layTen(env, psid))) await kho.luuTen(env, psid, await layTenKhach(env, psid));
 
-  // Người thật đang trực → chỉ ghi lịch sử, không xếp hàng, không trả lời.
-  if (await kho.nguoiDangTruc(env, psid)) {
+  // Người thật đang trực (đã tự gõ trả lời) → chỉ ghi lịch sử, không xếp hàng, không trả lời.
+  // (Bot tự "chuyển người" chỉ là im ngắn: tin vẫn xếp hàng, hết giờ chờ bộ não trả lời tiếp.)
+  const dauNguoi = await env.KHO.get(`nguoi:${psid}`);
+  if (dauNguoi && dauNguoi !== "cho-nguoi") {
     ls.push({ role: "user", content: noiDung, t: su.timestamp });
     await kho.luuLichSu(env, psid, ls);
     return;
@@ -148,8 +150,7 @@ async function traLoi(env, psid, ls, noiDung) {
   if (kq.chuyenNguoi) {
     if (!traLoi) traLoi = "Dạ em ghi nhận rồi ạ, chủ tiệm sẽ vào trả lời anh/chị sớm nhất nhé.";
     await kho.ghiChuyenNguoi(env, { psid, tin: noiDung, lyDo: kq.lyDo });
-    await kho.danhDauNguoiTruc(env, psid); // nhường sân cho người
-    if (!psid.startsWith("thu-")) { try { await nhuongQuyen(env, psid); } catch (e) { await kho.ghiLog(env, { loai: "nhuong", psid, loi: String(e.message) }); } }
+    await kho.danhDauChoNguoi(env, psid); // im ngắn cho chủ tiệm vào
   }
   ls.push({ role: "user", content: noiDung, t: Date.now() });
   if (traLoi) ls.push({ role: "assistant", content: traLoi, t: Date.now() });
@@ -214,10 +215,19 @@ async function admin(request, url, env) {
     await kho.xoaCho(env, b.psid);
     if (b.chuyen_nguoi) {
       await kho.ghiChuyenNguoi(env, { psid: b.psid, tin: b.tin || "", lyDo: b.ly_do || "" });
-      await kho.danhDauNguoiTruc(env, b.psid);
-      try { await nhuongQuyen(env, b.psid); } catch (e) { await kho.ghiLog(env, { loai: "nhuong", psid: b.psid, loi: String(e.message) }); }
+      await kho.danhDauChoNguoi(env, b.psid); // im ngắn cho chủ tiệm vào; hội thoại vẫn giữ ở app để bot nói tiếp nếu không ai vào
     }
     return json({ ok: true });
+  }
+  // Xoá dấu người trực / im ngắn cho một khách (khi cần bot nói lại ngay)
+  if (p === "/admin/mo-lai" && request.method === "POST") {
+    const psid = url.searchParams.get("psid");
+    if (!psid) return json({ loi: "thiếu psid" }, 400);
+    await env.KHO.delete(`nguoi:${psid}`);
+    const ls = await kho.layLichSu(env, psid);
+    const cuoi = [...ls].reverse().find(m => m.role === "user");
+    if (cuoi && url.searchParams.get("xep_hang") === "1") await kho.danhDauCho(env, psid, cuoi.content);
+    return json({ ok: true, psid, xepHang: Boolean(cuoi && url.searchParams.get("xep_hang") === "1") });
   }
   if (p === "/admin/khach" && request.method === "GET") {
     const psid = url.searchParams.get("psid");
