@@ -68,11 +68,11 @@ Tên Facebook của khách: {ten or "(không có)"}
 ===== TIN MỚI CỦA KHÁCH =====
 {tin_moi}
 
-Soạn tin trả lời tiếp theo. Trả về ĐÚNG một khối JSON, không chữ nào khác:
+Soạn tin trả lời tiếp theo. KHÔNG dùng bất kỳ công cụ nào (không tìm web, không đọc file, không chạy lệnh), chỉ dựa vào chữ ở trên. Trả về ĐÚNG một khối JSON, không chữ nào khác:
 {{"tra_loi": "...", "chuyen_nguoi": true|false, "ly_do": "..."}}"""
 
 def hoi_claude(prompt, thu_lai=1):
-    cmd = ["claude", "-p", "--model", MODEL, "--output-format", "json", "--max-turns", "1"]
+    cmd = ["claude", "-p", "--model", MODEL, "--output-format", "json", "--max-turns", "1", "--tools", ""]  # --tools "" = không công cụ
     r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=180)
     if r.returncode != 0:
         if thu_lai > 0:  # Claude Code thỉnh thoảng thoát mã 1 không lý do, thử lại một lần
@@ -107,6 +107,8 @@ def main():
 
     mot_vong()
 
+LOI_THEO_KHACH = {}  # psid -> số lần Claude lỗi liên tiếp
+
 def mot_vong():
     d = goi_worker("/admin/cho-xu-ly")
     if "khach" not in d:
@@ -118,8 +120,16 @@ def mot_vong():
         psid, tin = k["psid"], k["tin"]
         try:
             kq = hoi_claude(ghep_prompt(k.get("lichSu", []), tin, k.get("ten", "")))
+            LOI_THEO_KHACH.pop(psid, None)
         except Exception as e:
-            log(f"psid ..{psid[-6:]} LỖI Claude: {e}"); continue
+            n = LOI_THEO_KHACH.get(psid, 0) + 1; LOI_THEO_KHACH[psid] = n
+            log(f"psid ..{psid[-6:]} LỖI Claude lần {n}: {str(e)[:200]}")
+            if n >= 2:  # không thử mãi: nhắn khách một câu, nhường người, rút khỏi hàng chờ
+                g = goi_worker("/admin/gui", {"psid": psid, "text": "Dạ em ghi nhận rồi ạ, chủ tiệm sẽ vào trả lời anh/chị sớm nhất nhé.",
+                                              "nao": "du-phong", "chuyen_nguoi": True, "ly_do": "AI lỗi 2 lần: " + str(e)[:120], "tin": tin})
+                log(f"psid ..{psid[-6:]} → gửi câu chờ + chuyển người: {'OK' if g.get('ok') else g.get('loi')}")
+                LOI_THEO_KHACH.pop(psid, None)
+            continue
         text = kq["tra_loi"] or "Dạ em ghi nhận rồi ạ, chủ tiệm sẽ vào trả lời anh/chị sớm nhất nhé."
         g = goi_worker("/admin/gui", {"psid": psid, "text": text, "nao": f"claude-code/{MODEL}",
                                       "chuyen_nguoi": kq["chuyen_nguoi"], "ly_do": kq["ly_do"], "tin": tin})
