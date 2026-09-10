@@ -87,7 +87,7 @@ Thời gian lần đầu: khoảng 2–3 giờ. Bản mẫu chạy thật trên 
 - [ ] Sửa đường dẫn trong `local/tra-loi.sh`, `local/tra-loi-hidden.vbs`, `local/dang-ky-task.ps1` từ
       `D:\bot-tiem` / `/mnt/d/bot-tiem` sang thư mục của bạn, và tên user WSL.
 - [ ] PowerShell (Windows): `powershell -ExecutionPolicy Bypass -File D:\bot-tiem\local\dang-ky-task.ps1`.
-      Đạt khi in `LastTaskResult : 0`. Task chạy mỗi 3 phút.
+      Đạt khi in `LastTaskResult : 0`. Task chạy mỗi 1 phút.
 
 ### 5B. Worker tự gọi AI (chạy 24/24, tốn tiền theo tin)
 - [ ] `wrangler.toml`: `CHE_DO = "worker"`, `AI_BASE_URL` (ví dụ `https://api.openai.com/v1`), `MODEL`
