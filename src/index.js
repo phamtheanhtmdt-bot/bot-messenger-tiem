@@ -120,6 +120,7 @@ async function xuLySuKien(env, su) {
     ls.push({ role: "user", content: noiDung, t: su.timestamp });
     await kho.luuLichSu(env, psid, ls);
     await kho.danhDauCho(env, psid, noiDung);
+    await baoDangGo(env, psid); // khách thấy "..." ngay trong lúc bộ não soạn
     return;
   }
 

@@ -85,14 +85,35 @@ export const giànhQuyen = (env, psid) => goiHandover(env, "take_thread_control"
 export const nhuongQuyen = (env, psid, appId = HOP_THU_TRANG) =>
   goiHandover(env, "pass_thread_control", { recipient: { id: psid }, target_app_id: appId, metadata: "bot-tiem nhuong" });
 
+const cho = ms => new Promise(r => setTimeout(r, ms));
+
+// Tách lời đáp thành nhiều tin: mỗi dòng là một tin (bot viết mỗi ý một dòng).
+export function tachTin(text) {
+  return (text || "").split(/\r?\n+/).map(d => d.trim()).filter(Boolean).slice(0, 5);
+}
+
+// Gửi nhiều tin liên tiếp như người gõ: bật "đang gõ", nghỉ theo độ dài, rồi gửi.
+async function guiNhieuTin(env, psid, text) {
+  const ds = tachTin(text);
+  const ra = [];
+  for (let i = 0; i < ds.length; i++) {
+    if (i > 0) {
+      await baoDangGo(env, psid);
+      await cho(Math.min(3000, 900 + ds[i].length * 25));
+    }
+    ra.push(await guiTin(env, psid, ds[i]));
+  }
+  return ra;
+}
+
 // Gửi cho khách; nếu app khác đang cầm hội thoại (#10 / 2018300) thì giành quyền rồi gửi lại một lần.
 export async function guiTinBot(env, psid, text) {
   try {
-    return await guiTin(env, psid, text);
+    return await guiNhieuTin(env, psid, text);
   } catch (e) {
     if (!/2018300|kiểm soát thread|controls this thread|another app/i.test(String(e.message))) throw e;
     await giànhQuyen(env, psid);
-    return await guiTin(env, psid, text);
+    return await guiNhieuTin(env, psid, text);
   }
 }
 
