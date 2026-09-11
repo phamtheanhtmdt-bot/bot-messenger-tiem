@@ -7,3 +7,4 @@ node_modules/
 fb-page-token.txt
 local/tra-loi.log
 local/.lock
+.env
