@@ -4,14 +4,15 @@
 // thì thử con sau. Ghim tên model cụ thể, KHÔNG dùng bí danh best/cheap/fast, KHÔNG dùng deepseek.
 // Vào: lịch sử + tin mới của khách. Ra: { traLoi, chuyenNguoi, lyDo, usage, model }.
 
-import KIEN_THUC from "../kien-thuc/mo-dung.md";
+import KIEN_THUC from "../kien-thuc/doanh-nghiep.md";
+import KICH_BAN from "../kien-thuc/kich-ban.md";
 import { NHAN_CACH } from "./nhan-cach.js";
 
 const MAC_DINH_URL = "https://api.openai.com/v1";
 const MAC_DINH_MODEL = "gpt-4.1";
 
 function ghepSystem() {
-  return `${NHAN_CACH}\n\n===== SÁCH GIÁO KHOA VỀ TIỆM (nguồn sự thật duy nhất) =====\n${KIEN_THUC}`;
+  return `${NHAN_CACH}\n\n===== SÁCH GIÁO KHOA VỀ DOANH NGHIỆP (nguồn sự thật duy nhất) =====\n${KIEN_THUC}\n\n===== KỊCH BẢN NÓI CHUYỆN =====\n${KICH_BAN}`;
 }
 
 export function danhSachModel(env) {

@@ -1,117 +1,92 @@
-# Checklist: tự dựng bot Messenger trả lời khách cho tiệm của bạn
+# Checklist: tự dựng bot Messenger trả lời khách cho doanh nghiệp của bạn
 
-Mục tiêu: khách nhắn Fanpage → bot đọc "sách giáo khoa" về tiệm → trả lời trong vài giây → khách muốn chốt thì
-bot nhường người thật. Làm theo thứ tự, mỗi mục có cách KIỂM TRA ĐẠT, chưa đạt thì chưa sang mục sau.
-Thời gian lần đầu: khoảng 2–3 giờ. Bản mẫu chạy thật trên một Fanpage dịch vụ, 10/09/2026.
+Bạn làm việc qua **ứng dụng Claude Code** trên máy tính: mở thư mục dự án, gõ câu yêu cầu, Claude chạy lệnh giúp.
+Mỗi bước có (a) việc bạn tự bấm trên Facebook/Cloudflare, hoặc (b) một câu để nói với Claude Code. Mỗi bước có cách
+KIỂM TRA ĐẠT; chưa đạt thì chưa sang bước sau. Lần đầu mất khoảng 2 giờ.
 
 ## 0. Cần có trước khi bắt đầu
 
-- [ ] Fanpage mà bạn là **quản trị viên** (không phải biên tập viên).
+- [ ] Fanpage mà bạn là **quản trị viên**.
 - [ ] Tài khoản Facebook đó vào được https://developers.facebook.com.
-- [ ] Tài khoản Cloudflare miễn phí tại https://dash.cloudflare.com (đăng ký bằng email).
-- [ ] Máy Windows đã cài WSL Ubuntu, Node.js 20 trở lên, Git. Kiểm tra: mở WSL gõ `node -v` và `git --version`.
-- [ ] Bộ não AI, chọn MỘT: (a) Claude Code đã đăng nhập, gõ `claude --version` chạy được; hoặc (b) một khoá API
-      dịch vụ tương thích OpenAI (OpenAI, Kyma...). Luồng (a) cần máy bật, luồng (b) chạy 24/24.
-- [ ] Mã nguồn: trong WSL gõ `git clone https://github.com/phamtheanhtmdt-bot/bot-messenger-tiem.git /mnt/d/bot-tiem`.
+- [ ] Tài khoản Cloudflare miễn phí: https://dash.cloudflare.com (đăng ký bằng email, không cần thẻ).
+- [ ] Ứng dụng **Claude Code** đã cài và đăng nhập (claude.ai/code → tải bản máy tính).
+- [ ] Máy có **Node.js 20+** (nodejs.org, bản LTS) và **Git** (git-scm.com). Kiểm tra: mở Claude Code, nói
+      "kiểm tra máy tôi đã có node và git chưa" → Claude báo số phiên bản.
+- [ ] Một **khoá API AI**: OpenAI (platform.openai.com → API keys) hoặc dịch vụ tương thích OpenAI mà giảng viên chỉ định.
+      Nạp ít (10–20 USD), **không bật nạp tiền tự động**.
+- [ ] Tải mã: vào https://github.com/phamtheanhtmdt-bot/bot-messenger-doanh-nghiep → nút **Code** → **Download ZIP** → giải nén
+      vào một thư mục dễ nhớ, ví dụ `D:\bot-messenger`. Rồi mở Claude Code → **Open folder** → chọn thư mục đó.
+      Đạt khi trong thư mục có `CLAUDE.md`, `src`, `kien-thuc`, `docs`.
 
-## 1. Tạo ứng dụng Facebook (một lần)
+## 1. Tạo ứng dụng Facebook (làm tay, một lần)
 
-- [ ] 1.1 developers.facebook.com → My Apps → **Create App** → chọn "Business" → đặt tên (ví dụ "Bot Tiệm Nails").
-      Kiểm tra: có App ID dạng số 15 chữ số ở góc trên.
+- [ ] 1.1 developers.facebook.com → My Apps → **Create App** → chọn **Business** → đặt tên (ví dụ "Bot [tên doanh nghiệp]").
+      Đạt khi góc trên có **App ID** (số 15 chữ số). Ghi lại.
 - [ ] 1.2 Dashboard → **Add product** → **Messenger** → Set up.
-- [ ] 1.3 Messenger → Settings → **Access Tokens** → Add or remove Pages → chọn Page của bạn → **Generate token**.
-      Khi Facebook hỏi quyền, giữ tick: `pages_messaging`, `pages_manage_metadata`, `pages_read_engagement`.
-      Lưu token vào file `fb-page-token.txt` trong thư mục bot (file này đã bị .gitignore chặn).
-      Kiểm tra: mở https://developers.facebook.com/tools/debug/accesstoken/ dán token → `Valid: True`,
-      Scopes có `pages_messaging`.
-- [ ] 1.4 Settings → Basic → **App Secret** → Show → lưu tạm. Ghi lại cả **App ID**.
-- [ ] 1.5 Công tắc **App Mode** ở thanh trên chuyển sang **Live**.
-      Lưu ý: nếu sau này bot chỉ nhắn được cho chính bạn mà không nhắn được khách lạ, app cần xin
-      Advanced Access cho `pages_messaging` (App Review) hoặc xác minh doanh nghiệp.
+- [ ] 1.3 Messenger → Settings → **Access Tokens** → Add or remove Pages → chọn Page → **Generate token**. Giữ tick 3 quyền:
+      `pages_messaging`, `pages_manage_metadata`, `pages_read_engagement`. Chép token, giữ ở chỗ an toàn (sẽ dán cho Claude ở 2.4).
+      Đạt khi dán token vào developers.facebook.com/tools/debug/accesstoken thấy Valid: True, Scopes có pages_messaging.
+- [ ] 1.4 Settings → Basic → **App Secret** → Show → chép. Ghi lại cả **App ID**.
+- [ ] 1.5 Công tắc **App Mode** ở thanh trên → **Live**.
+      Nếu về sau bot chỉ nhắn được cho chính bạn, app cần xin Advanced Access cho pages_messaging (App Review) hoặc xác minh doanh nghiệp.
+- [ ] 1.6 Lấy **ID Trang**: vào Page → Giới thiệu → cuối trang có "ID Trang". Ghi lại.
 
-## 2. Dựng worker trên Cloudflare (hộp thư của bot)
+## 2. Dựng worker trên Cloudflare (Claude Code làm giúp)
 
-- [ ] 2.1 Mở WSL: `cd /mnt/d/bot-tiem && npm install`.
-- [ ] 2.2 `npx wrangler login` → trình duyệt mở → Allow. Kiểm tra: `npx wrangler whoami` in ra email và Account ID.
-- [ ] 2.3 Tạo kho nhớ: `npx wrangler kv namespace create KHO` → chép dòng `id = "..."`.
-- [ ] 2.4 Sửa `wrangler.toml`: `name` (tên worker của bạn, không dấu), `account_id` (từ 2.2), `FB_PAGE_ID`
-      (Page → Giới thiệu → ID Trang), `FB_APP_ID` (từ 1.4), `id` của KV (từ 2.3).
-- [ ] 2.5 `npx wrangler deploy` → in ra địa chỉ `https://<tên>.<tài-khoản>.workers.dev`.
-      Kiểm tra: mở địa chỉ đó thấy chữ "đang chạy".
-- [ ] 2.6 Nghĩ 2 chuỗi ngẫu nhiên dài 20+ ký tự: một làm `FB_VERIFY_TOKEN`, một làm `ADMIN_KEY`. Lưu lại.
-- [ ] 2.7 Đặt secret (mỗi cái một lệnh, giá trị ghi trong file KHÔNG xuống dòng cuối):
-      ```
-      printf '%s' 'GIÁ_TRỊ' > .secret.tmp && npx wrangler secret put FB_PAGE_TOKEN < .secret.tmp
-      ```
-      Làm lần lượt cho: `FB_PAGE_TOKEN`, `FB_APP_SECRET`, `FB_VERIFY_TOKEN`, `ADMIN_KEY`, và `OPENAI_API_KEY`
-      nếu chọn luồng (b). Xong xoá `.secret.tmp`.
-- [ ] 2.8 Kiểm tra bắt tay:
-      ```
-      curl "https://<worker>/webhook?hub.mode=subscribe&hub.verify_token=<FB_VERIFY_TOKEN>&hub.challenge=123"
-      ```
-      Đạt khi màn hình in đúng `123`.
-- [ ] 2.9 Kiểm tra cửa quản trị: mở `https://<worker>/admin?key=<ADMIN_KEY>` thấy JSON có `"bot"`.
+- [ ] 2.1 Nói với Claude Code: **"Đọc CLAUDE.md và làm phần 2 của docs/checklist-hoc-vien.md. Bắt đầu từ kiểm tra máy và đăng nhập Cloudflare."**
+      Claude chạy `npm install`, rồi `npx wrangler login` → trình duyệt mở → bấm **Allow**.
+      Đạt khi Claude báo `whoami` in ra email và Account ID của bạn.
+- [ ] 2.2 Claude tạo kho nhớ (`kv namespace create KHO`) và điền 5 chỗ `<...>` trong `wrangler.toml`. Claude sẽ hỏi bạn
+      **tên worker** (chữ thường không dấu, ví dụ `bot-an-spa`), **ID Trang** (1.6), **App ID** (1.1).
+- [ ] 2.3 Claude chạy `npx wrangler deploy`. Đạt khi Claude đưa bạn địa chỉ `https://<tên>.<tài-khoản>.workers.dev`
+      và mở lên thấy chữ "đang chạy".
+- [ ] 2.4 Đặt 5 secret. Claude sẽ hỏi lần lượt, bạn dán vào chat: **Page token** (1.3), **App Secret** (1.4), **khoá AI** (phần 0).
+      Hai cái còn lại (`FB_VERIFY_TOKEN`, `ADMIN_KEY`) Claude tự sinh chuỗi ngẫu nhiên và cho bạn biết để giữ.
+      Đạt khi Claude báo 5 dòng "Success! Uploaded secret".
+- [ ] 2.5 Kiểm tra bắt tay: nói **"kiểm tra bắt tay webhook"**. Đạt khi Claude báo worker trả đúng challenge.
+- [ ] 2.6 Kiểm tra cửa quản trị: nói **"mở /admin xem trạng thái"**. Đạt khi thấy `bot`, `webhookLanCuoi`.
 
-## 3. Nối Facebook với worker
+## 3. Nối Facebook với worker (làm tay, Claude kiểm tra)
 
 - [ ] 3.1 developers.facebook.com → app → Messenger → Settings → **Webhooks** → Add Callback URL:
-      URL = `https://<worker>/webhook`, Verify token = `FB_VERIFY_TOKEN` → Verify and save.
-      Đạt khi Facebook không báo lỗi (worker phải trả đúng challenge như 2.8).
-- [ ] 3.2 Cùng chỗ → Manage/Add subscriptions → tick `messages`, `message_echoes`, `standby`, `messaging_handovers`.
-- [ ] 3.3 Access Tokens → dòng Page của bạn → **Add subscriptions** (subscribe Page vào app).
-- [ ] 3.4 Vào Facebook → Trang → Cài đặt → Nhắn tin → **Nhắn tin nâng cao** → Connected Apps → dòng app của bạn
-      → Chỉnh sửa → bật **Kiểm soát cuộc trò chuyện**. Nếu Page có AI của Meta, bật thêm
-      **Kiểm soát các cuộc trò chuyện với Business AI**. Chỉ bật cho MỘT app; Pancake/Botcake để "kênh dự phòng".
-- [ ] 3.5 Kiểm tra sống: từ một nick khác nhắn "alo" vào Page. Mở `/admin?key=` → `webhookLanCuoi` có giờ,
-      `khachDangCho` = 1. Chưa thấy thì xem lại 3.1–3.4, hay gặp nhất là 3.3 và 3.4.
+      URL = `https://<worker>/webhook`, Verify token = `FB_VERIFY_TOKEN` (Claude đã cho ở 2.4) → Verify and save.
+      Đạt khi Facebook không báo lỗi.
+- [ ] 3.2 Cùng chỗ → Add subscriptions → tick `messages`, `message_echoes`, `standby`, `messaging_handovers`.
+- [ ] 3.3 Access Tokens → dòng Page của bạn → **Add subscriptions**.
+- [ ] 3.4 Facebook → Trang → Cài đặt → Nhắn tin → **Nhắn tin nâng cao** → Connected Apps → dòng app của bạn → Chỉnh sửa →
+      bật **Kiểm soát cuộc trò chuyện**. Page có AI của Meta thì bật thêm **Kiểm soát các cuộc trò chuyện với Business AI**,
+      và tắt AI của Meta trong Business Suite → Hộp thư → Tự động hoá. Chỉ bật cho MỘT app.
+- [ ] 3.5 Kiểm tra sống: từ một nick khác nhắn "alo" vào Page. Nói với Claude: **"xem /admin, webhook đã nhận chưa"**.
+      Đạt khi `webhookLanCuoi` có giờ. Chưa thấy: xem lại 3.4 → 3.3 → 3.1.
 
-## 4. Dạy bot về tiệm của bạn
+## 4. Dạy bot về doanh nghiệp của bạn
 
-- [ ] 4.1 Sửa `kien-thuc/mo-dung.md` (đổi thành tiệm bạn): tiệm là ai, địa chỉ, giờ mở, bảng giá dịch vụ,
-      cách đặt lịch, câu hỏi hay gặp và câu trả lời, 3 điều bot ĐƯỢC hứa, việc nào phải chuyển người.
-      Nguyên tắc: không có trong file thì bot không được nói.
-- [ ] 4.2 Sửa `src/nhan-cach.js`: xưng hô, giọng, luật cứng (không giảm giá, không hứa thời gian...).
-- [ ] 4.3 `npx wrangler deploy` lại.
-- [ ] 4.4 Kiểm tra (chỉ dùng được khi luồng b, hoặc chạy `python3 local/tra-loi.py --thu "..."` với luồng a):
-      ```
-      curl -X POST "https://<worker>/admin/thu?key=<ADMIN_KEY>" -H "content-type: application/json" \
-        -d '{"psid":"a","text":"làm móng gel giá bao nhiêu?"}'
-      ```
-      Đạt khi câu trả lời đúng giá trong file và không bịa.
+- [ ] 4.1 Mở `kien-thuc/doanh-nghiep.md`, điền các chỗ [ngoặc vuông]: bạn là ai, sản phẩm và giá, quy trình mua, câu hay hỏi,
+      3 điều được hứa, khi nào chuyển người. Có 4 ví dụ ở cuối file để tham khảo, xoá khi xong.
+      Hoặc nói với Claude: **"Phỏng vấn tôi để điền kien-thuc/doanh-nghiep.md"** rồi trả lời từng câu.
+- [ ] 4.2 Mở `src/nhan-cach.js`: thay [TÊN DOANH NGHIỆP], [TÊN CHỦ], [KÊNH LIÊN HỆ TRỰC TIẾP]. Muốn bot đóng vai chính bạn
+      (không phải trợ lý) thì nói với Claude: **"đổi bot sang đóng vai chính chủ"**.
+- [ ] 4.3 Nói **"deploy lại"**.
+- [ ] 4.4 Nói **"hỏi thử bot: [một câu khách hay hỏi về giá]"**. Đạt khi câu trả lời đúng giá trong sách, không bịa,
+      chia 2–3 dòng ngắn, xưng hô "anh/chị" khi chưa biết khách.
+- [ ] 4.5 Nói **"bật bot"**. Đạt khi `/admin` báo `"bot": "bat"`.
 
-## 5. Chọn bộ não, chỉ một trong hai
-
-### 5A. Claude Code trên máy (không cần khoá API, máy phải bật)
-- [ ] `wrangler.toml`: `CHE_DO = "may-tinh"` → deploy.
-- [ ] Trong WSL: `python3 local/tra-loi.py --thu "chị ơi giá bao nhiêu"` → in JSON có `tra_loi`. Mất 5–10 giây.
-- [ ] Sửa đường dẫn trong `local/tra-loi.sh`, `local/tra-loi-hidden.vbs`, `local/dang-ky-task.ps1` từ
-      `D:\bot-tiem` / `/mnt/d/bot-tiem` sang thư mục của bạn, và tên user WSL.
-- [ ] PowerShell (Windows): `powershell -ExecutionPolicy Bypass -File D:\bot-tiem\local\dang-ky-task.ps1`.
-      Đạt khi in `LastTaskResult : 0`. Task chạy liên tục (2 giây ngó hàng chờ một lần).
-
-### 5B. Worker tự gọi AI (chạy 24/24, tốn tiền theo tin)
-- [ ] `wrangler.toml`: `CHE_DO = "worker"`, `AI_BASE_URL` (ví dụ `https://api.openai.com/v1`), `MODEL`
-      (một hoặc nhiều tên cách nhau dấu phẩy) → deploy.
-- [ ] Secret `OPENAI_API_KEY` đã đặt (2.7).
-- [ ] Bật bot: `curl -X POST "https://<worker>/admin/bot?key=<ADMIN_KEY>&trang_thai=bat"`.
-- [ ] Không bật nạp tiền tự động ở nhà cung cấp AI; giữ số dư thấp.
-
-## 6. Test theo vai trước khi cho khách thật
+## 5. Test theo vai trước khi cho khách thật
 
 - [ ] Khách hỏi giá → đúng giá, không bịa.
-- [ ] Khách xin giảm giá → không hứa, chuyển người.
-- [ ] Khách "chốt luôn" → trả lời lịch sự + `/admin` có mục trong `khachCanNguoi`, bot im với khách đó 6 giờ.
-- [ ] Chủ tiệm tự trả lời một khách trong Hộp thư/Pancake → bot im với khách đó 6 giờ.
+- [ ] Khách xin giảm giá → không hứa.
+- [ ] Khách "chốt luôn" → bot thu thông tin, mời liên hệ trực tiếp, `/admin` có mục trong `khachCanNguoi`.
+- [ ] Khách hỏi tiếp sau khi chốt → bot vẫn trả lời.
+- [ ] Bạn tự trả lời một khách trong Hộp thư → bot im với khách đó 6 giờ.
 - [ ] Khách gửi ảnh không chữ → bot hỏi lại, không đoán.
-- [ ] Tắt bot bằng `/admin/bot?trang_thai=tat` → bot im hẳn; bật lại được.
-- [ ] Toàn bộ 12 bước ở `docs/kich-ban-test.md`.
+- [ ] Đủ 12 bước ở `docs/kich-ban-test.md`.
 
-## 7. Vận hành và khi hỏng
+## 6. Vận hành và khi hỏng
 
-- [ ] Mỗi sáng mở `/admin?key=`: xem `khachCanNguoi` (khách chờ người), `loiGanDay` (lỗi), `webhookLanCuoi`.
+- [ ] Mỗi sáng nói với Claude: **"xem /admin có khách nào cần người và có lỗi gì không"**.
+- [ ] Đổi giá, đổi sản phẩm: sửa `kien-thuc/doanh-nghiep.md` → "deploy lại". Không cần sửa code.
 - [ ] Bot chỉ trả lời được khách nhắn trong 24 giờ gần nhất (luật Facebook). Khách cũ hơn: chăm tay.
-- [ ] Luồng 5A: máy tắt/ngủ = bot ngừng. Xem `local/tra-loi.log` nếu không thấy trả lời.
-- [ ] Không bao giờ đưa token/secret vào git, vào chat nhóm, vào trang web lạ.
-- [ ] Đổi giá, đổi dịch vụ: sửa `kien-thuc/*.md` → deploy. Không cần sửa code.
-- [ ] Không thấy tin tới webhook: kiểm tra theo thứ tự 3.4 → 3.3 → 3.1 → token còn hạn (1.3).
+- [ ] Không bao giờ đưa token, secret, khoá AI vào file trong git, vào chat nhóm, hay trang web lạ.
+- [ ] Tin không tới webhook: kiểm 3.4 → 3.3 → 3.1 → token còn hạn (1.3).
 - [ ] Bot gửi lỗi "app khác đang kiểm soát": xem 3.4, chỉ một app được bật "Kiểm soát cuộc trò chuyện".
+- [ ] Bot trả lời "người phụ trách sẽ vào trả lời" cho mọi khách: khoá AI hết tiền hoặc sai, xem `loiGanDay` ở `/admin`.

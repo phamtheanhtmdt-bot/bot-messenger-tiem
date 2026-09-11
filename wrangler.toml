@@ -1,18 +1,18 @@
-# Bot Messenger cho tiệm — sửa 5 chỗ có chữ <...> rồi `npx wrangler deploy`
-# Secrets (npx wrangler secret put): FB_PAGE_TOKEN, FB_APP_SECRET, FB_VERIFY_TOKEN, ADMIN_KEY, OPENAI_API_KEY (nếu CHE_DO=worker)
-name = "<ten-worker-khong-dau>"          # ví dụ: bot-tiem-nails-cua-lan
+# Bot Messenger cho doanh nghiệp — Claude Code sẽ điền 5 chỗ có chữ <...> rồi chạy `npx wrangler deploy`
+# Secrets (npx wrangler secret put): FB_PAGE_TOKEN, FB_APP_SECRET, FB_VERIFY_TOKEN, ADMIN_KEY, OPENAI_API_KEY
+name = "<ten-worker-khong-dau>"          # ví dụ: bot-an-spa (chữ thường, không dấu, gạch ngang)
 main = "src/index.js"
 compatibility_date = "2026-06-04"
 account_id = "<account-id-tu-npx-wrangler-whoami>"
 workers_dev = true
 
 [vars]
-CHE_DO = "may-tinh"               # may-tinh: Claude Code trên máy soạn trả lời (local/tra-loi.py) | worker: worker tự gọi AI_BASE_URL
+CHE_DO = "worker"                 # worker tự gọi AI ở AI_BASE_URL (để nguyên)
 FB_PAGE_ID = "<id-trang-facebook>"       # Trang → Giới thiệu → ID Trang
 FB_APP_ID = "<id-app-developers>"        # developers.facebook.com → app → App ID
-AI_BASE_URL = "https://api.openai.com/v1"    # chỉ dùng khi CHE_DO=worker; dịch vụ tương thích OpenAI
-MODEL = "gpt-4.1"                        # một hoặc nhiều tên cách nhau dấu phẩy, con đầu lỗi thử con sau
-GIO_NGUOI_TRUC = "6"              # người thật trả lời xong, bot im bấy nhiêu giờ với khách đó
+AI_BASE_URL = "https://api.openai.com/v1"    # OpenAI, hoặc dịch vụ tương thích OpenAI (ví dụ https://kymaapi.com/v1)
+MODEL = "gpt-4.1"                        # một hoặc nhiều tên cách nhau dấu phẩy, con đầu lỗi thử con sau (tên phải có ở nhà cung cấp bạn dùng)
+GIO_NGUOI_TRUC = "6"              # chủ doanh nghiệp tự trả lời xong, bot im bấy nhiêu giờ với khách đó
 PHUT_CHO_NGUOI = "0"              # bot tự "chuyển người" thì im bấy nhiêu phút (0 = không im, chỉ ghi sổ; bot chỉ im khi người thật đã trả lời)
 
 [[kv_namespaces]]

@@ -1,4 +1,4 @@
-// Bot Messenger cho tiệm — Cloudflare Worker trả lời tin nhắn Fanpage bằng AI.
+// Bot Messenger cho doanh nghiệp — Cloudflare Worker trả lời tin nhắn Fanpage bằng AI.
 //
 // Đường đi:
 //   GET  /webhook   Facebook gọi một lần để "bắt tay" (kiểm FB_VERIFY_TOKEN)
@@ -7,7 +7,7 @@
 //   POST /admin/bot?key=...&trang_thai=bat|tat   tắt/bật bot toàn cục
 //   POST /admin/thu?key=...  body {"psid":"thu","text":"..."}  hỏi AI mà KHÔNG gửi Facebook
 //
-// Bot im khi: bot bị tắt, hoặc người thật (chủ tiệm) vừa trả lời khách đó trong GIO_NGUOI_TRUC giờ.
+// Bot im khi: bot bị tắt, hoặc người thật (chủ doanh nghiệp) vừa trả lời khách đó trong GIO_NGUOI_TRUC giờ.
 
 import { kiemTraChuKy, guiTin, guiTinBot, baoDangGo, nhuongQuyen, layTenKhach } from "./facebook.js";
 import { hoiAI } from "./ai.js";
@@ -24,7 +24,7 @@ export default {
     if (p === "/webhook" && request.method === "GET") return batTay(url, env);
     if (p === "/webhook" && request.method === "POST") return nhanWebhook(request, env, ctx);
     if (p.startsWith("/admin")) return admin(request, url, env);
-    if (p === "/") return new Response("bot-messenger-tiem đang chạy.", { headers: { "content-type": "text/plain; charset=utf-8" } });
+    if (p === "/") return new Response("bot-messenger đang chạy.", { headers: { "content-type": "text/plain; charset=utf-8" } });
     return new Response("Not found", { status: 404 });
   },
 };
@@ -136,7 +136,7 @@ async function xuLySuKien(env, su) {
     await kho.luuLichSu(env, psid, ls);
     await kho.ghiChuyenNguoi(env, { psid, tin: noiDung, lyDo: "AI lỗi: " + String(e.message || e) });
     await kho.danhDauNguoiTruc(env, psid);
-    await guiTinBot(env, psid, "Dạ em đã nhận tin của anh/chị, chủ tiệm sẽ vào trả lời sớm nhất ạ.");
+    await guiTinBot(env, psid, "Dạ em đã nhận tin của anh/chị, người phụ trách sẽ vào trả lời sớm nhất ạ.");
     throw e;
   }
   if (kq.traLoi) await guiTinBot(env, psid, kq.traLoi);
@@ -148,9 +148,9 @@ async function traLoi(env, psid, ls, noiDung) {
   const kq = await hoiAI(env, ls, ten ? `[Tên Facebook của khách: ${ten}]\n${noiDung}` : noiDung);
   let traLoi = kq.traLoi;
   if (kq.chuyenNguoi) {
-    if (!traLoi) traLoi = "Dạ em ghi nhận rồi ạ, chủ tiệm sẽ vào trả lời anh/chị sớm nhất nhé.";
+    if (!traLoi) traLoi = "Dạ em ghi nhận rồi ạ, người phụ trách sẽ vào trả lời anh/chị sớm nhất nhé.";
     await kho.ghiChuyenNguoi(env, { psid, tin: noiDung, lyDo: kq.lyDo });
-    await kho.danhDauChoNguoi(env, psid); // im ngắn cho chủ tiệm vào
+    await kho.danhDauChoNguoi(env, psid); // im ngắn cho chủ doanh nghiệp vào
   }
   ls.push({ role: "user", content: noiDung, t: Date.now() });
   if (traLoi) ls.push({ role: "assistant", content: traLoi, t: Date.now() });
@@ -216,7 +216,7 @@ async function admin(request, url, env) {
     await kho.xoaCho(env, b.psid);
     if (b.chuyen_nguoi) {
       await kho.ghiChuyenNguoi(env, { psid: b.psid, tin: b.tin || "", lyDo: b.ly_do || "" });
-      await kho.danhDauChoNguoi(env, b.psid); // im ngắn cho chủ tiệm vào; hội thoại vẫn giữ ở app để bot nói tiếp nếu không ai vào
+      await kho.danhDauChoNguoi(env, b.psid); // im ngắn cho chủ doanh nghiệp vào; hội thoại vẫn giữ ở app để bot nói tiếp nếu không ai vào
     }
     return json({ ok: true });
   }
