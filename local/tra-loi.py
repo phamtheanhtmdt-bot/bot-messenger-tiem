@@ -82,7 +82,8 @@ def hoi_claude(prompt, thu_lai=1):
     if d.get("is_error"): raise RuntimeError(f"claude is_error: {d.get('result')}")
     text = d.get("result", "")
     bat, ket = text.find("{"), text.rfind("}")
-    o = json.loads(text[bat:ket + 1])
+    tho = re.sub(r'"(?:[^"\\]|\\.)*"', lambda m: m.group(0).replace("\r\n", "\\n").replace("\n", "\\n"), text[bat:ket + 1], flags=re.S)
+    o = json.loads(tho)
     return {"tra_loi": o.get("tra_loi", "").strip(), "chuyen_nguoi": bool(o.get("chuyen_nguoi")),
             "ly_do": o.get("ly_do", ""), "cost": d.get("total_cost_usd"), "ms": d.get("duration_ms")}
 

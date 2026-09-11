@@ -24,7 +24,9 @@ function bocJson(text) {
   const ket = text.lastIndexOf("}");
   if (bat >= 0 && ket > bat) {
     try {
-      const o = JSON.parse(text.slice(bat, ket + 1));
+      // model hay để xuống dòng thật bên trong chuỗi JSON → đổi thành \n rồi mới parse
+      const tho = text.slice(bat, ket + 1).replace(/"(?:[^"\\]|\\.)*"/gs, m => m.replace(/\r?\n/g, "\\n"));
+      const o = JSON.parse(tho);
       if (typeof o.tra_loi === "string") {
         return { traLoi: o.tra_loi.trim(), chuyenNguoi: Boolean(o.chuyen_nguoi), lyDo: o.ly_do || "" };
       }
